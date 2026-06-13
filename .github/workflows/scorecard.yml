@@ -3,9 +3,9 @@ name: scorecard
 # Nightly recap: which alerted bets resolved (HIT/MISS) and net realized PnL.
 on:
   schedule:
-    # 04:00 UTC. Adjust to your timezone: 11pm US-Eastern ≈ 03:00–04:00 UTC,
-    # 11pm US-Pacific ≈ 06:00–07:00 UTC (offset shifts with daylight saving).
-    - cron: '0 4 * * *'
+    # 06:00 UTC = 11:00pm America/Phoenix (MST, UTC-7). Phoenix has no daylight
+    # saving, so this stays at 11pm local year-round.
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 concurrency:

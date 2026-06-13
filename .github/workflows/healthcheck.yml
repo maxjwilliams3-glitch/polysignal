@@ -1,0 +1,47 @@
+name: healthcheck
+
+# Hourly watchdog: alerts Slack if the watcher has gone silent. GitHub also
+# emails you when a scheduled workflow fails, so between the two a dead bot
+# can't stay quiet for long.
+on:
+  schedule:
+    - cron: '0 * * * *'   # hourly
+  workflow_dispatch:
+
+concurrency:
+  group: polysignal-state
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+    env:
+      POLYSIGNAL_SLACK_WEBHOOK_URL: ${{ secrets.POLYSIGNAL_SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Restore database
+        uses: actions/cache/restore@v4
+        with:
+          path: polysignal.db
+          key: polysignal-db-${{ github.run_id }}
+          restore-keys: |
+            polysignal-db-
+
+      - name: Check watcher heartbeat
+        run: python -m polysignal.healthcheck
+
+      - name: Save database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: polysignal.db
+          key: polysignal-db-${{ github.run_id }}-${{ github.run_attempt }}

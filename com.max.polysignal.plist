@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd job for PolySignal (hands-off scheduling on macOS).
+
+  Runs ONE cycle every StartInterval seconds using --once. launchd owns the
+  schedule and relaunches on failure.
+
+  SETUP:
+    1. Edit WorkingDirectory and the python path below to your real paths.
+       Use your venv python: /Users/maxwellwilliams/polysignal/.venv/bin/python
+    2. The bot reads .env from WorkingDirectory, so your webhook there is enough.
+    3. Copy to: ~/Library/LaunchAgents/com.max.polysignal.plist
+    4. Load:    launchctl load ~/Library/LaunchAgents/com.max.polysignal.plist
+       Unload:  launchctl unload ~/Library/LaunchAgents/com.max.polysignal.plist
+    5. Logs at the StandardOut/Error paths below.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.max.polysignal</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/maxwellwilliams/polysignal/.venv/bin/python</string>
+        <string>-m</string>
+        <string>polysignal.main</string>
+        <string>--once</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/maxwellwilliams/polysignal</string>
+
+    <!-- Run every 15 minutes (900s). Adjust to taste. -->
+    <key>StartInterval</key>
+    <integer>900</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/maxwellwilliams/polysignal/polysignal.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/maxwellwilliams/polysignal/polysignal.err.log</string>
+</dict>
+</plist>

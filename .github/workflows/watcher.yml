@@ -1,0 +1,50 @@
+name: watcher
+
+# The 15-minute signal watcher — the cloud replacement for the launchd job.
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # every 15 minutes (cron is UTC)
+  workflow_dispatch:          # lets you trigger a run by hand from the Actions tab
+
+# All three PolySignal workflows share this group so they never touch the
+# SQLite database at the same time (the cache is restored/saved per run).
+concurrency:
+  group: polysignal-state
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    env:
+      POLYSIGNAL_SLACK_WEBHOOK_URL: ${{ secrets.POLYSIGNAL_SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      # The bot detects *change*, so it must remember the last snapshot. We carry
+      # polysignal.db between runs via the Actions cache: restore the latest, then
+      # save it again afterwards (even on failure, so the failure counter sticks).
+      - name: Restore database
+        uses: actions/cache/restore@v4
+        with:
+          path: polysignal.db
+          key: polysignal-db-${{ github.run_id }}
+          restore-keys: |
+            polysignal-db-
+
+      - name: Run one cycle
+        run: python -m polysignal.main --once
+
+      - name: Save database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: polysignal.db
+          key: polysignal-db-${{ github.run_id }}-${{ github.run_attempt }}

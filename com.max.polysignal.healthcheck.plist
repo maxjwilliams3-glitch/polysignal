@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd watchdog for PolySignal.
+
+  Runs hourly and pings Slack if the 15-min watcher has gone silent (no
+  successful cycle in config.STALENESS_ALERT_HOURS). This is the safety net for
+  the case the watcher can't cover itself: it isn't running at all.
+
+  SETUP:
+    1. Edit WorkingDirectory and the python path below to your real paths.
+    2. Reads .env from WorkingDirectory (same Slack webhook).
+    3. Copy to: ~/Library/LaunchAgents/com.max.polysignal.healthcheck.plist
+    4. Load:    launchctl load ~/Library/LaunchAgents/com.max.polysignal.healthcheck.plist
+       Unload:  launchctl unload ~/Library/LaunchAgents/com.max.polysignal.healthcheck.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.max.polysignal.healthcheck</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/maxwellwilliams/polysignal/.venv/bin/python</string>
+        <string>-m</string>
+        <string>polysignal.healthcheck</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/maxwellwilliams/polysignal</string>
+
+    <!-- Check every hour (3600s). -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/maxwellwilliams/polysignal/polysignal.healthcheck.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/maxwellwilliams/polysignal/polysignal.healthcheck.err.log</string>
+</dict>
+</plist>

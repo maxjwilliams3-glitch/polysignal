@@ -1,0 +1,47 @@
+name: scorecard
+
+# Nightly recap: which alerted bets resolved (HIT/MISS) and net realized PnL.
+on:
+  schedule:
+    # 04:00 UTC. Adjust to your timezone: 11pm US-Eastern ≈ 03:00–04:00 UTC,
+    # 11pm US-Pacific ≈ 06:00–07:00 UTC (offset shifts with daylight saving).
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: polysignal-state
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  scorecard:
+    runs-on: ubuntu-latest
+    env:
+      POLYSIGNAL_SLACK_WEBHOOK_URL: ${{ secrets.POLYSIGNAL_SLACK_WEBHOOK_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Restore database
+        uses: actions/cache/restore@v4
+        with:
+          path: polysignal.db
+          key: polysignal-db-${{ github.run_id }}
+          restore-keys: |
+            polysignal-db-
+
+      - name: Score resolved signals
+        run: python -m polysignal.scorecard
+
+      - name: Save database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: polysignal.db
+          key: polysignal-db-${{ github.run_id }}-${{ github.run_attempt }}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd job for the PolySignal end-of-day scorecard.
+
+  Runs once a day and posts a HIT/MISS summary of resolved signals to Slack.
+  Companion to com.max.polysignal.plist (the 15-min watcher). It scores the
+  alerts that watcher logged.
+
+  SETUP:
+    1. Edit WorkingDirectory and the python path below to your real paths.
+    2. Reads .env from WorkingDirectory (same Slack webhook).
+    3. Copy to: ~/Library/LaunchAgents/com.max.polysignal.scorecard.plist
+    4. Load:    launchctl load ~/Library/LaunchAgents/com.max.polysignal.scorecard.plist
+       Unload:  launchctl unload ~/Library/LaunchAgents/com.max.polysignal.scorecard.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.max.polysignal.scorecard</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/maxwellwilliams/polysignal/.venv/bin/python</string>
+        <string>-m</string>
+        <string>polysignal.scorecard</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/maxwellwilliams/polysignal</string>
+
+    <!-- Run every day at 23:00 (11pm) local time. -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>23</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/maxwellwilliams/polysignal/polysignal.scorecard.out.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/maxwellwilliams/polysignal/polysignal.scorecard.err.log</string>
+</dict>
+</plist>
